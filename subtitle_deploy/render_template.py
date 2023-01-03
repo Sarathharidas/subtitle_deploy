@@ -65,8 +65,7 @@ def youtube():
   youtube_link = request.form.get('youtube_link')
   with youtube_dl.YoutubeDL(ydl_opts) as ydl:
     ydl.download([youtube_link])
-  txt_file = whisper_api(new_video.wav)
-  return send_file(txt_file, as_attachment=True)
+  return send_file('Srtfile.srt', as_attachment=True)
 
 def whisper_api(audio_wav):
   url = "https://transcribe.whisperapi.com"
@@ -100,9 +99,8 @@ def whisper_api(audio_wav):
 
     srtFilename = os.path.join("Srtfile.srt")
     with open(srtFilename, 'a', encoding='utf-8') as srtFile:
-      srtFile.write(segment)
+      srtFile.write(segment) 
 
-whisper_api('C:/Users/sarat/Downloads/test (2).wav')
 
 # if __name__ == '__main__':
 #   app.debug
