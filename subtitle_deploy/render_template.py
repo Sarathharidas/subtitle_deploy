@@ -4,6 +4,10 @@ from werkzeug.utils import secure_filename
 import os
 import youtube_dl
 
+import requests
+from datetime import timedelta
+
+
 UPLOAD_FOLDER = '/upload_video'
 
 app = Flask(__name__)
@@ -61,6 +65,44 @@ def youtube():
   youtube_link = request.form.get('youtube_link')
   with youtube_dl.YoutubeDL(ydl_opts) as ydl:
     ydl.download([youtube_link])
+
+
+
+def whisper_api(audio_wav):
+  url = "https://transcribe.whisperapi.com"
+  headers = {
+'Authorization': 'Bearer 3G32WTPNZ7F3YGQNYAQ4GFYJLY81UH9B'
+}
+  file = {'file': open('new_video.wav', 'rb')}
+  data = {
+
+  "diarization": "false",
+  #Note: setting this to be true will slow down results.
+  #Fewer file types will be accepted when diarization=true
+  #"numSpeakers": "2",
+  #if using diarization, you can inform the model how many speakers you have
+  #if no value set, the model figures out numSpeakers automatically!
+   #can't have both a url and file sent!, 
+   "task":"translate"
+}
+response = requests.post(url, headers=headers, files=file, data=data)
+print(response.text)
+
+response_json = response.json()
+segments = response_json['segments']
+
+for segment in segments:
+  startTime = str(0)+str(timedelta(seconds=int(segment['start'])))+',000'
+  endTime = str(0)+str(timedelta(seconds=int(segment['end'])))+',000'
+  text = segment['text']
+  segmentId = segment['id']+1
+  segment = f"{segmentId}\n{startTime} --> {endTime}\n{text[1:] if text[0] is ' ' else text}\n\n"
+
+  srtFilename = os.path.join("SrtFiles", f"VIDEO_FILENAME.srt")
+  with open(srtFilename, 'a', encoding='utf-8') as srtFile:
+    srtFile.write(segment)
+
+
 
 if __name__ == '__main__':
   app.debug
