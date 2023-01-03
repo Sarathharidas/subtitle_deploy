@@ -65,7 +65,7 @@ def youtube():
   youtube_link = request.form.get('youtube_link')
   with youtube_dl.YoutubeDL(ydl_opts) as ydl:
     ydl.download([youtube_link])
-  return send_file('Srtfile.srt', as_attachment=True)
+  return send_file('/home/sarathharidas13/subtitle_deploy/Srtfile.srt', as_attachment=True)
 
 def whisper_api(audio_wav):
   url = "https://transcribe.whisperapi.com"
