@@ -65,15 +65,15 @@ def youtube():
   youtube_link = request.form.get('youtube_link')
   with youtube_dl.YoutubeDL(ydl_opts) as ydl:
     ydl.download([youtube_link])
-
-
+  txt_file = whisper_api(new_video.wav)
+  return send_file(txt_file, as_attachment=True)
 
 def whisper_api(audio_wav):
   url = "https://transcribe.whisperapi.com"
   headers = {
 'Authorization': 'Bearer 3G32WTPNZ7F3YGQNYAQ4GFYJLY81UH9B'
 }
-  file = {'file': open('new_video.wav', 'rb')}
+  file = {'file': open(audio_wav, 'rb')}
   data = {
 
   "diarization": "false",
