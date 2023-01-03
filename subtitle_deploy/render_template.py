@@ -102,6 +102,6 @@ def whisper_api(audio_wav):
       srtFile.write(segment) 
 
 
-# if __name__ == '__main__':
-#   app.debug
-#   app.run()
+if __name__ == '__main__':
+  app.debug
+  app.run()
