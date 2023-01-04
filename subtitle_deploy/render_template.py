@@ -65,7 +65,7 @@ def youtube():
   youtube_link = request.form.get('youtube_link')
   with youtube_dl.YoutubeDL(ydl_opts) as ydl:
     ydl.download([youtube_link])
-  srtFilename = whisper_api(new_video.wav, youtube_link)
+  srtFilename = whisper_api('new_video.wav', youtube_link)
   os.system( 'rm new_video.wav')
   return send_file(srtFilename, as_attachment=True)
 
