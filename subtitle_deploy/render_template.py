@@ -65,9 +65,10 @@ def youtube():
   youtube_link = request.form.get('youtube_link')
   with youtube_dl.YoutubeDL(ydl_opts) as ydl:
     ydl.download([youtube_link])
-  return send_file('/home/sarathharidas13/subtitle_deploy/Srtfile.srt', as_attachment=True)
+  whisper_api(new_video.wav, youtube_link)
+  return send_file(srtFilename, as_attachment=True)
 
-def whisper_api(audio_wav):
+def whisper_api(audio_wav, youtube_link):
   url = "https://transcribe.whisperapi.com"
   headers = {
 'Authorization': 'Bearer 3G32WTPNZ7F3YGQNYAQ4GFYJLY81UH9B'
@@ -97,10 +98,10 @@ def whisper_api(audio_wav):
     segmentId = segmentId +1
     segment = f"{segmentId}\n{startTime} --> {endTime}\n{text[1:] if text[0] is ' ' else text}\n\n"
 
-    srtFilename = os.path.join("Srtfile.srt")
+    srtFilename = os.path.join("{}+_Srtfile.srt".format(youtube_link))
     with open(srtFilename, 'a', encoding='utf-8') as srtFile:
       srtFile.write(segment) 
-
+    return srtFilename
 
 if __name__ == '__main__':
   app.debug
