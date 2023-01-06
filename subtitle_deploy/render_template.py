@@ -7,10 +7,10 @@ import subprocess
 import requests
 from datetime import timedelta
 
-Arlington, VirginiaArlington, Virginia
-UPLOAD_FOLDER = '/upload_video'Arlington, Virginia
 
-app = Flask(__name__)Ocean City, Maryland
+UPLOAD_FOLDER = '/upload_video'
+
+app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 ydl_opts = {
