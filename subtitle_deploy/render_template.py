@@ -2,15 +2,15 @@ from flask import Flask, render_template, url_for, request, redirect, url_for, s
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import os
-import youtube_dl
-
+#import youtube_dl
+import subprocess
 import requests
 from datetime import timedelta
 
+Arlington, VirginiaArlington, Virginia
+UPLOAD_FOLDER = '/upload_video'Arlington, Virginia
 
-UPLOAD_FOLDER = '/upload_video'
-
-app = Flask(__name__)
+app = Flask(__name__)Ocean City, Maryland
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 ydl_opts = {
@@ -36,45 +36,52 @@ def landing_page():
 def handle_form_submissione():
   email_address = request.form.get('email')
   print(email_address)
-  with open('emails.txt', 'a') as f:
+  email_path = os.path.join( os.getcwd(), 'emails.txt')
+  with open(email_path, 'a') as f:
     f.write(email_address + ','+ str(datetime.now())+'\n')
-  return render_template('options.html')
+  return render_template('upload.html')
 
-# @app.route('/upload',  methods=['POST', 'GET'])
-# def upload():
-#     if request.method == 'POST':
-#         # check if the post request has the file part
-#       if 'file' not in request.files:
-#         flash('No file part')
-#         return redirect(request.url)
-#       file = request.files['file']
-#         # If the user does not select a file, the browser submits an
-#         # empty file without a filename.
-#       if file.filename == '':
-#         flash('No selected file')
-#         return redirect(request.url)
-#       if file:
-#         filename = secure_filename(file.filename)
-#         print("This is the file")
-#         print(filename)
-#         #file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-#         return render_template('landing_page_2.html')
+@app.route('/upload',  methods=['POST', 'GET'])
+def upload():
+  if request.method == 'POST':
+        # check if the post request has the file part
+    if 'file' not in request.files:
+      flash('No file part')
+      return redirect(request.url)
+    file = request.files['file']
+        # if user does not select file, browser also
+        # submit an empty part without filename
+    if file.filename == '':
+      flash('No selected file')
+      return redirect(request.url)
+        # show a message while the file is being uploaded
+    #print('file is')
+    #print(file)
+    #print(file.filename)
+    filename = secure_filename(file.filename)
+    video_file_only_name = filename[0:filename.find('.')]
+    video_folder_path = os.path.join(os.getcwd(), video_file_only_name)
+    if not os.path.exists(video_folder_path):
+      os.makedirs(video_folder_path)
+    video_file_path_full = os.path.join(video_folder_path, filename)
+    file.save(os.path.join(video_folder_path, filename))
+        # redirect the user to the uploaded file's URL
+    wav_file_path = os.path.join(video_folder_path, video_file_only_name+'.wav')
+    command = "ffmpeg -i {0} -ab 160k -ac 2 -ar 44100 -vn {1}".format(video_file_path_full, wav_file_path)
+    subprocess.call(command, shell=True)
+    srtFilename = whisper_api(wav_file_path, video_folder_path)
+    os.remove(video_file_path_full)
+    os.remove(wav_file_path)
+    return send_file(srtFilename, as_attachment=True)
 
-@app.route('/youtube',  methods=['POST', 'GET']) 
-def youtube():
-  youtube_link = request.form.get('youtube_link')
-  with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-    ydl.download([youtube_link])
-  srtFilename = whisper_api('new_video.wav', youtube_link)
-  os.system( 'rm new_video.wav')
-  return send_file(srtFilename, as_attachment=True)
 
-def whisper_api(audio_wav, youtube_link):
+
+def whisper_api(audio_wav_path, video_folder_path):
   url = "https://transcribe.whisperapi.com"
   headers = {
-'Authorization': 'Bearer 3G32WTPNZ7F3YGQNYAQ4GFYJLY81UH9B'
+'Authorization': 'Bearer 3G32WTPNZ7F3YGQNYAQ4GFYJLY81UH9B'  
 }
-  file = {'file': open(audio_wav, 'rb')}
+  file = {'file': open(audio_wav_path, 'rb')}
   data = {
 
   "diarization": "false",
@@ -97,12 +104,22 @@ def whisper_api(audio_wav, youtube_link):
     endTime = str(0)+str(timedelta(seconds=int(segment['end'])))+',000'
     text = segment['text']
     segmentId = segmentId +1
-    segment = f"{segmentId}\n{startTime} --> {endTime}\n{text[1:] if text[0] is ' ' else text}\n\n"
+    segment_text = f"{segmentId}\n{startTime} --> {endTime}\n{text[1:] if text[0] is ' ' else text}\n\n"
 
-    srtFilename = os.path.join("{}+_Srtfile.srt".format(youtube_link))
+    srtFilename = os.path.join(video_folder_path, 'english_subtitles.srt')
     with open(srtFilename, 'a', encoding='utf-8') as srtFile:
-      srtFile.write(segment) 
-    return srtFilename
+      srtFile.write(segment_text) 
+  return srtFilename
+
+# @app.route('/youtube',  methods=['POST', 'GET']) 
+# def youtube():
+#   youtube_link = request.form.get('youtube_link')
+#   with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+#     ydl.download([youtube_link])
+#   srtFilename = whisper_api(new_video.wav, youtube_link)
+#   os.system( 'rm new_video.wav')
+#   return send_file(srtFilename, as_attachment=True)
+
 
 if __name__ == '__main__':
   app.debug
